@@ -1,13 +1,13 @@
 [build]
   command = "npm run build"
-  publish = "dist"
+  publish = "dist/public"
   functions = "functions"
 
 [dev]
   command = "npm run dev:frontend"
   port = 3000
   targetPort = 3000
-  publish = "dist"
+  publish = "dist/public"
   autoLaunch = true
 
 [[redirects]]

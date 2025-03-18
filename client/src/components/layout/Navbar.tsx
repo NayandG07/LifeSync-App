@@ -57,6 +57,7 @@ import { toast } from "sonner";
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 interface UserProfile {
   name: string;
@@ -578,39 +579,24 @@ const Navbar = ({ onProfileClick }: NavbarProps) => {
                   <span className="font-medium">Personal Details</span>
                 </DropdownMenuItem>
                 
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger className="px-4 py-2.5 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/50 dark:hover:to-indigo-900/50">
+                <DropdownMenuItem 
+                  onClick={toggleTheme}
+                  className="flex items-center justify-between px-4 py-2.5 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/50 dark:hover:to-indigo-900/50"
+                >
+                  <div className="flex items-center">
                     {theme === 'dark' ? (
                       <Moon className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
                     ) : (
                       <Sun className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400" />
                     )}
                     <span className="font-medium">Theme</span>
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-lg border border-gray-200/50 dark:border-gray-700/50">
-                    <DropdownMenuItem 
-                      onClick={() => setSpecificTheme("light")}
-                      className="group px-4 py-2.5 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/50 dark:hover:to-indigo-900/50"
-                    >
-                      <Sun className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:rotate-12 transition-transform duration-300" />
-                      <span>Light</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => setSpecificTheme("dark")}
-                      className="group px-4 py-2.5 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/50 dark:hover:to-indigo-900/50"
-                    >
-                      <Moon className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:rotate-12 transition-transform duration-300" />
-                      <span>Dark</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      onClick={() => setSpecificTheme("system")}
-                      className="group px-4 py-2.5 rounded-lg transition-all duration-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 dark:hover:from-blue-900/50 dark:hover:to-indigo-900/50"
-                    >
-                      <Laptop className="mr-2 h-4 w-4 text-blue-600 dark:text-blue-400 group-hover:rotate-12 transition-transform duration-300" />
-                      <span>System</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                  </div>
+                  <Switch
+                    checked={theme === 'dark'}
+                    onCheckedChange={(checked) => setSpecificTheme(checked ? 'dark' : 'light')}
+                    className="ml-2"
+                  />
+                </DropdownMenuItem>
                 
                 <DropdownMenuSeparator className="my-2 bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-700 to-transparent" />
                 <DropdownMenuItem 
