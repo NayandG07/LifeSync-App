@@ -1,0 +1,9 @@
+# Configuration for Netlify in the functions directory
+# Explicitly exclude configuration files from being deployed as functions
+
+[functions]
+  # Include only files that are actual serverless functions
+  included_files = ["src/**/*.js", "src/**/*.ts"]
+  
+  # Exclude configuration files
+  excluded_files = ["*.config.js", "eslint-config.js", "tsconfig*.json", "package.json", "package-lock.json"] 
