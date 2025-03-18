@@ -5,5 +5,16 @@
   # Include only files that are actual serverless functions
   included_files = ["src/**/*.js", "src/**/*.ts"]
   
-  # Exclude configuration files
-  excluded_files = ["*.config.js", "eslint-config.js", "tsconfig*.json", "package.json", "package-lock.json"] 
+  # Exclude configuration files and node_modules
+  excluded_files = [
+    "*.config.js",
+    "eslint-config.js",
+    "tsconfig*.json",
+    "package.json",
+    "package-lock.json",
+    ".eslintrc",
+    ".eslintrc.js",
+    ".eslintrc.json",
+    ".eslintrc.yml",
+    "node_modules/**"
+  ] 
