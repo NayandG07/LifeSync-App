@@ -1,7 +1,11 @@
 [build]
-  command = "npm run build"
+  command = "npm install && npm run build"
   publish = "dist/public"
   functions = "functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
 
 [dev]
   command = "npm run dev:frontend"
