@@ -8,11 +8,14 @@
   # Exclude configuration files and node_modules
   excluded_files = [
     "*.config.js",
+    "eslint-config.js",
     "eslintrc-config.js",
-    "*eslintrc*",
     "tsconfig*.json",
     "package.json",
     "package-lock.json",
-    ".netlify.toml",
-    "node_modules/**/*"
+    "**/node_modules/**/.eslintrc",
+    "**/node_modules/**/.eslintrc.js",
+    "**/node_modules/**/.eslintrc.yml",
+    "**/node_modules/**/.eslintrc.json",
+    "**/node_modules/**/*"
   ] 
