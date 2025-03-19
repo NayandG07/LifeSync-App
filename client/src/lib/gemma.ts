@@ -3,7 +3,8 @@ import { ChatMessage } from "./types";
 // API configuration
 // We're using a test function first to diagnose issues
 const TEST_URL = "/.netlify/functions/test";
-const API_URL = "/.netlify/functions/gemma-proxy";
+const GEMMA_TEST_URL = "/.netlify/functions/gemma-test"; // Add test endpoint
+const API_URL = "/.netlify/functions/gemma-proxy.mjs"; // Update to use MJS version
 const API_KEY = (window as any).ENV?.NEXT_PUBLIC_HUGGINGFACE_API_KEY || '';
 
 // Log API key status for debugging (without revealing the actual key)
@@ -210,7 +211,7 @@ export async function generateGemmaResponse(
 
     // Test the serverless function infrastructure with a simple call first
     try {
-      console.log("Testing serverless functions with:", TEST_URL);
+      console.log("Testing basic serverless functions with:", TEST_URL);
       const testResponse = await fetch(TEST_URL, {
         method: "GET",
         headers: {
@@ -224,8 +225,30 @@ export async function generateGemmaResponse(
         console.error("Test function error:", testResponse.status, errorText.substring(0, 100));
         throw new Error(`Test function returned ${testResponse.status}`);
       } else {
-        console.log("Test function successful, proceeding with Gemma API call");
+        console.log("Basic test function successful");
       }
+      
+      // Now test the Gemma-specific test function
+      console.log("Testing Gemma-specific test function with:", GEMMA_TEST_URL);
+      const gemmaTestResponse = await fetch(GEMMA_TEST_URL, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      
+      if (!gemmaTestResponse.ok) {
+        // If the test fails, log the error and proceed with caution
+        const errorText = await gemmaTestResponse.text();
+        console.error("Gemma test function error:", gemmaTestResponse.status, errorText.substring(0, 100));
+        console.warn("Gemma test function failed, but will try main API anyway");
+      } else {
+        // If successful, log the response for debugging
+        const testData = await gemmaTestResponse.json();
+        console.log("Gemma test function successful:", testData);
+      }
+      
+      console.log("Proceeding with Gemma API call");
     } catch (testError) {
       console.error("Error testing serverless function:", testError);
       const category = getCategory(currentMessage);
@@ -253,17 +276,13 @@ export async function generateGemmaResponse(
         
         clearTimeout(timeoutId);
         
+        // Get raw response text first for debugging
+        const responseText = await response.text();
+        console.log("Raw API Response:", responseText.substring(0, 200));
+        
         // Handle API errors
         if (!response.ok) {
           console.error(`API Error: ${response.status} - ${response.statusText}`);
-          
-          // Try to read the error response
-          try {
-            const errorText = await response.text();
-            console.error("Error response:", errorText.substring(0, 200));
-          } catch (e) {
-            console.error("Could not read error response");
-          }
           
           if (response.status === 503 || response.status === 504) {
             console.warn("API service unavailable - falling back to local generation");
@@ -278,14 +297,10 @@ export async function generateGemmaResponse(
           return getRandomResponse(category);
         }
         
-        // Get the response - first try as text to debug any issues
-        let responseText;
+        // Try to parse the response text as JSON
+        let data;
         try {
-          responseText = await response.text();
-          console.log("Raw API Response:", responseText.substring(0, 200));
-          
-          // Now parse it as JSON
-          const data = JSON.parse(responseText);
+          data = JSON.parse(responseText);
           console.log("Parsed API Response:", data);
           
           // Use fallback responses if no good response from API

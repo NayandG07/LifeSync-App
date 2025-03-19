@@ -17,9 +17,40 @@
   directory = "functions/src"
   node_bundler = "esbuild"
   included_files = ["functions/src/**/*.js", "functions/src/**/*.ts"]
-  excluded_files = ["**/node_modules/**/.eslintrc*"]
-  external_node_modules = ["node-fetch"]
+  excluded_files = ["**/node_modules/**/.eslintrc*", "**/node_modules/**/*"]
 
+# Individual function configurations
+[[functions]]
+  name = "gemma-proxy"
+  path = "functions/src/gemma-proxy.js"
+
+[[functions]]
+  name = "gemma-proxy.mjs"
+  path = "functions/src/gemma-proxy.mjs"
+
+[[functions]]
+  name = "gemma-test"
+  path = "functions/src/gemma-test.js"
+
+[[functions]]
+  name = "test"
+  path = "functions/src/test.js"
+
+[[functions]]
+  name = "hello"
+  path = "functions/src/hello.js"
+
+[[functions]]
+  name = "hello-world"
+  path = "functions/src/hello-world.js"
+
+# API routes should not be handled by the SPA
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# All other routes handled by the SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
