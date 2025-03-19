@@ -1,34 +1,64 @@
-const fetch = require('node-fetch');
+// Netlify function to proxy requests to HuggingFace API
+import fetch from 'node-fetch';
 
-exports.handler = async (event, context) => {
+// Handle preflight CORS requests
+const headers = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'application/json'
+};
+
+export const handler = async (event, context) => {
+  // Handle OPTIONS request for CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers
+    };
+  }
+  
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
       body: JSON.stringify({ error: 'Method Not Allowed' }),
       headers: {
-        'Content-Type': 'application/json',
-        'Allow': 'POST'
+        ...headers,
+        'Allow': 'POST, OPTIONS'
       }
     };
   }
 
   try {
-    // Get API key from environment variable or function settings
+    // Get API key from environment variable
     const API_KEY = process.env.NEXT_PUBLIC_HUGGINGFACE_API_KEY;
     
     if (!API_KEY) {
+      console.error("API key not found in environment variables");
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'API key not configured on server' }),
-        headers: { 'Content-Type': 'application/json' }
+        headers,
+        body: JSON.stringify({ error: 'API key not configured on server' })
       };
     }
 
     const API_URL = "https://api-inference.huggingface.co/models/google/gemma-2b-it";
     
     // Parse the request body from the client
-    const requestBody = JSON.parse(event.body);
+    let requestBody;
+    try {
+      requestBody = JSON.parse(event.body);
+    } catch (e) {
+      console.error("Error parsing request body", e);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid request body - could not parse JSON' })
+      };
+    }
+    
+    console.log("Forwarding request to HuggingFace API");
     
     // Forward the request to HuggingFace API
     const response = await fetch(API_URL, {
@@ -40,17 +70,28 @@ exports.handler = async (event, context) => {
       body: JSON.stringify(requestBody)
     });
 
+    // Check if the response is ok before parsing JSON
+    if (!response.ok) {
+      console.error(`HuggingFace API error: ${response.status} ${response.statusText}`);
+      return {
+        statusCode: response.status,
+        headers,
+        body: JSON.stringify({ 
+          error: `Error from HuggingFace API: ${response.statusText}`,
+          status: response.status
+        })
+      };
+    }
+
     // Get the response data
     const data = await response.json();
+    console.log("Received response from HuggingFace API");
     
     // Return the API response to the client
     return {
-      statusCode: response.status,
-      body: JSON.stringify(data),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*' // Allow all origins for development
-      }
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(data)
     };
     
   } catch (error) {
@@ -58,14 +99,11 @@ exports.handler = async (event, context) => {
     
     return {
       statusCode: 500,
+      headers,
       body: JSON.stringify({ 
         error: 'Failed to proxy request to HuggingFace API',
         message: error.message
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      })
     };
   }
 }; 
