@@ -1,5 +1,5 @@
 [build]
-command = "npm install && npm run build"
+command = "npm install && npm run prebuild && vite build"
 publish = "dist/public"
 
 [build.environment]
@@ -16,9 +16,22 @@ autoLaunch = true
 [functions]
 directory = "functions/src"
 node_bundler = "esbuild"
-included_files = ["functions/src/**/*.js", "functions/src/**/*.ts"]
-excluded_files = ["**/node_modules/**/.eslintrc*", "**/node_modules/**/*"]
-external_node_modules = ["node-fetch", "firebase", "firebase-admin"]
+included_files = [
+  "functions/src/**/*.js",
+  "functions/src/**/*.ts"
+]
+excluded_files = [
+  "**/node_modules/**/.eslintrc.js",
+  "**/node_modules/**/.eslintrc.json",
+  "**/node_modules/**/.eslintrc.yml",
+  "**/node_modules/**/.eslintrc",
+  "**/node_modules/**/*"
+]
+external_node_modules = [
+  "node-fetch",
+  "firebase",
+  "firebase-admin"
+]
 
 [[redirects]]
 from = "/.netlify/functions/*"
