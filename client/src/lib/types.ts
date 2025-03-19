@@ -1,4 +1,4 @@
-// Define the ChatMessage type for OpenChat
+// Define the ChatMessage type for API calls
 export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;

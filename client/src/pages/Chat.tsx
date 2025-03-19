@@ -324,58 +324,113 @@ export default function Chat() {
       setIsMessageLoading(true);
       
       // Create user message
-      const userMsg: Message = {
+      const userMsg = {
         id: uuidv4(),
-        content: input,
-        role: "user",
-        timestamp: new Date().toISOString(),
+        text: input,
+        sender: 'user',
+        timestamp: new Date()
       };
       
       // Add user message to state
-      setMessages(prev => [...prev, userMsg]);
+      const updatedMessages = [...messages, userMsg];
+      setMessages(updatedMessages);
       
       // Clear input after sending
       setInput("");
       
-      // Try to generate a response via Gemma API
+      // Update tabs with the new message
+      const updatedTabs = tabs.map(tab => 
+        tab.id === activeTabId 
+          ? { ...tab, messages: [...tab.messages, userMsg], lastUpdated: new Date() }
+          : tab
+      );
+      setTabs(updatedTabs);
+      
+      // Save to localStorage for persistence
+      localStorage.setItem(`chat_tabs_${user?.uid}`, JSON.stringify(updatedTabs));
+      
+      // Save to Firebase if user is logged in
+      if (user) {
+        try {
+          await saveChatMessage(user.uid, userMsg);
+        } catch (saveError) {
+          console.error("Error saving message:", saveError);
+        }
+      }
+      
+      // Convert messages to format expected by Gemma API
+      const gemmaMessages = updatedMessages.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      }));
+      
       try {
-        const response = await gemma.generateGemmaResponse(
-          messages.map(msg => ({ 
-            role: msg.role, 
-            content: msg.content 
-          })),
-          userMsg.content
+        // Call the Gemma API through our proxy function
+        const response = await generateGemmaResponse(
+          gemmaMessages, 
+          input
         );
         
-        // Create assistant message with API response
-        const botMsg: Message = {
+        // Create bot message with the response
+        const botMsg = {
           id: uuidv4(),
-          content: response,
-          role: "assistant", 
-          timestamp: new Date().toISOString(),
+          text: response,
+          sender: 'bot',
+          timestamp: new Date()
         };
         
-        // Add assistant message to state
-        setMessages(prev => [...prev, botMsg]);
+        // Add bot message to state
+        const messagesWithResponse = [...updatedMessages, botMsg];
+        setMessages(messagesWithResponse);
+        
+        // Update tabs with the bot message
+        const tabsWithResponse = updatedTabs.map(tab => 
+          tab.id === activeTabId 
+            ? { ...tab, messages: [...tab.messages, botMsg], lastUpdated: new Date() }
+            : tab
+        );
+        setTabs(tabsWithResponse);
+        
+        // Save to localStorage
+        localStorage.setItem(`chat_tabs_${user?.uid}`, JSON.stringify(tabsWithResponse));
+        
+        // Save to Firebase if user is logged in
+        if (user) {
+          try {
+            await saveChatMessage(user.uid, botMsg);
+          } catch (saveError) {
+            console.error("Error saving bot message:", saveError);
+          }
+        }
+        
       } catch (error) {
         console.error("Error getting response from AI:", error);
         
         // Create error message
-        const errorMsg: Message = {
+        const errorMsg = {
           id: uuidv4(),
-          content: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
-          role: "assistant",
-          timestamp: new Date().toISOString(),
+          text: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+          sender: 'bot',
+          timestamp: new Date()
         };
         
         // Add error message to state
-        setMessages(prev => [...prev, errorMsg]);
-      } finally {
-        // Reset loading state
-        setIsMessageLoading(false);
+        setMessages([...updatedMessages, errorMsg]);
+        
+        // Update tabs with the error message
+        const tabsWithError = updatedTabs.map(tab => 
+          tab.id === activeTabId 
+            ? { ...tab, messages: [...tab.messages, errorMsg], lastUpdated: new Date() }
+            : tab
+        );
+        setTabs(tabsWithError);
+        
+        // Save to localStorage
+        localStorage.setItem(`chat_tabs_${user?.uid}`, JSON.stringify(tabsWithError));
       }
     } catch (error) {
       console.error("Error in handleSendMessage:", error);
+    } finally {
       setIsMessageLoading(false);
     }
   };
