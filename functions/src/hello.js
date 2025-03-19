@@ -7,7 +7,8 @@ export const handler = async (event, context) => {
       'Access-Control-Allow-Origin': '*'
     },
     body: JSON.stringify({
-      message: "Hello from LifeSync API! Functions are working correctly."
+      message: "Hello from LifeSync API! Functions are working correctly.",
+      timestamp: new Date().toISOString()
     })
   };
 }; 

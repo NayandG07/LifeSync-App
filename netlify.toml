@@ -1,7 +1,6 @@
 [build]
   command = "npm install && npm run build"
   publish = "dist/public"
-  functions = "functions"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -17,7 +16,9 @@
 [functions]
   directory = "functions/src"
   node_bundler = "esbuild"
-  included_files = ["src/**/*.js", "src/**/*.ts"]
+  included_files = ["functions/src/**/*.js", "functions/src/**/*.ts"]
+  excluded_files = ["**/node_modules/**/.eslintrc*"]
+  external_node_modules = ["node-fetch"]
 
 [[redirects]]
   from = "/*"
