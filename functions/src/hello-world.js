@@ -1,22 +1,35 @@
-// A simple Netlify function using ES module format
-export const handler = async (event, context) => {
+// A minimal Netlify function that should work regardless of bundling issues
+exports.handler = async (event, context) => {
+  // Set CORS headers
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Content-Type': 'application/json'
+  };
+
+  // Handle OPTIONS request for CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 204,
+      headers
+    };
+  }
+
   try {
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: "Hello from LifeSync API!" }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers,
+      body: JSON.stringify({ 
+        message: "Hello from a minimal Netlify function!",
+        timestamp: new Date().toISOString()
+      })
     };
   } catch (error) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Failed to execute function" }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      }
+      headers,
+      body: JSON.stringify({ error: "Failed to execute function" })
     };
   }
 }; 

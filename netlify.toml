@@ -29,6 +29,10 @@
   path = "functions/src/gemma-proxy.mjs"
 
 [[functions]]
+  name = "gemma-proxy-simple"
+  path = "functions/src/gemma-proxy-simple.js"
+
+[[functions]]
   name = "gemma-test"
   path = "functions/src/gemma-test.js"
 

@@ -8,6 +8,10 @@
       "path": "src/gemma-proxy.mjs",
       "preferredRuntime": "nodejs"
     },
+    "gemma-proxy-simple": {
+      "path": "src/gemma-proxy-simple.js",
+      "preferredRuntime": "nodejs"
+    },
     "test": {
       "path": "src/test.js",
       "preferredRuntime": "nodejs"
