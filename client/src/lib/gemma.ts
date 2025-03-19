@@ -1,8 +1,9 @@
 import { ChatMessage } from "./types";
 
 // API configuration
-const API_URL = "https://api-inference.huggingface.co/models/google/gemma-2b-it";
-const API_KEY = window.ENV?.NEXT_PUBLIC_HUGGINGFACE_API_KEY || '';
+// We use a serverless function as a proxy to avoid CORS issues with direct API calls
+const API_URL = "/.netlify/functions/gemma-proxy";
+const API_KEY = (window as any).ENV?.NEXT_PUBLIC_HUGGINGFACE_API_KEY || '';
 
 // Log API key status for debugging (without revealing the actual key)
 if (!API_KEY) {
@@ -191,7 +192,7 @@ export async function generateGemmaResponse(
     // For all other messages, including feeling sad, use the API
     const allMessages = [
       ...messages,
-      { role: "user", content: currentMessage }
+      { role: "user" as const, content: currentMessage }
     ];
 
     // Format messages for the API
@@ -206,22 +207,19 @@ export async function generateGemmaResponse(
       return getRandomResponse(category);
     }
 
-    // Call the Hugging Face Inference API with improved error handling
+    // Call the Netlify serverless function with improved error handling
     try {
-      // Skip the HEAD request network check - it's causing 401 errors
-      // Instead, go directly to the API call with proper error handling
+      console.log("Sending request to:", API_URL);
+      console.log("API key status:", API_KEY ? "Set" : "Not set");
+      
       const controller = new AbortController();
       // Reduce timeout from 15s to 10s for faster fallback
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
       try {
-        console.log("Sending request to:", API_URL);
-        console.log("API key status:", API_KEY ? "Set" : "Not set");
-        
         const response = await fetch(API_URL, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${API_KEY}`,
             "Content-Type": "application/json"
           },
           body: JSON.stringify(payload),
@@ -329,7 +327,7 @@ function cleanResponse(text: string): string {
   text = text.replace(/in your responses:[\s\S]*?compassionate presence\./i, "").trim();
   
   // Remove any User: or similar patterns that might follow
-  text = text.split(/\n(?:User|Human):.*$/s)[0].trim();
+  text = text.split(/\n(?:User|Human):.*$/)[0].trim();
   
   // If we've stripped everything, provide a fallback response
   if (!text) {
