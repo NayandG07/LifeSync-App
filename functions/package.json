@@ -1,5 +1,6 @@
 {
   "name": "lifesync-netlify-functions",
+  "type": "module",
   "version": "1.0.0",
   "description": "Serverless functions for LifeSync app",
   "main": "index.js",
@@ -7,8 +8,6 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "firebase": "^11.4.0",
-    "firebase-admin": "^13.2.0",
-    "node-fetch": "^2.6.9"
+    "node-fetch": "^3.3.2"
   }
 }

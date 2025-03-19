@@ -1,44 +1,26 @@
 [build]
-command = "npm install && npm run prebuild && vite build"
-publish = "dist/public"
+  command = "npm install && npm run build"
+  publish = "dist/public"
 
 [build.environment]
-NODE_VERSION = "18"
-NPM_VERSION = "9"
+  NODE_VERSION = "18"
+  NPM_VERSION = "9"
 
 [dev]
-command = "npm run dev:frontend"
-port = 3000
-targetPort = 3000
-publish = "dist/public"
-autoLaunch = true
+  command = "npm run dev:frontend"
+  port = 3000
+  targetPort = 3000
+  publish = "dist/public"
+  autoLaunch = true
 
 [functions]
-directory = "functions/src"
-node_bundler = "esbuild"
-included_files = [
-  "functions/src/**/*.js",
-  "functions/src/**/*.ts"
-]
-excluded_files = [
-  "**/node_modules/**/.eslintrc.js",
-  "**/node_modules/**/.eslintrc.json",
-  "**/node_modules/**/.eslintrc.yml",
-  "**/node_modules/**/.eslintrc",
-  "**/node_modules/**/*"
-]
-external_node_modules = [
-  "node-fetch",
-  "firebase",
-  "firebase-admin"
-]
+  directory = "functions/src"
+  node_bundler = "esbuild"
+  included_files = ["functions/src/**/*.js", "functions/src/**/*.ts"]
+  excluded_files = ["**/node_modules/**/.eslintrc*"]
+  external_node_modules = ["node-fetch"]
 
 [[redirects]]
-from = "/.netlify/functions/*"
-to = "/.netlify/functions/:splat"
-status = 200
-
-[[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200 
+  from = "/*"
+  to = "/index.html"
+  status = 200 
