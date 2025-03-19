@@ -1,6 +1,7 @@
 [build]
   command = "npm install && npm run build"
   publish = "dist/public"
+  functions = "functions/src"
 
 [build.environment]
   NODE_VERSION = "18"
@@ -16,17 +17,34 @@
 [functions]
   directory = "functions/src"
   node_bundler = "esbuild"
-  included_files = ["functions/src/**/*.js", "functions/src/**/*.ts"]
-  excluded_files = ["**/node_modules/**/.eslintrc*"]
-  external_node_modules = ["node-fetch"]
+  included_files = [
+    "functions/src/**/*.js",
+    "functions/src/**/*.ts"
+  ]
 
-# First, add a redirect for functions with a higher priority
+[functions.excluded_files]
+  patterns = [
+    "**/node_modules/**",
+    "**/.git/**",
+    "**/README.md",
+    "**/package.json",
+    "**/package-lock.json",
+    "**/*.config.js",
+    "**/*.test.js",
+    "**/*.spec.js",
+    "**/.eslintrc*",
+    "**/tsconfig*.json"
+  ]
+
+[functions.external_node_modules]
+  - "node-fetch"
+
 [[redirects]]
   from = "/.netlify/functions/*"
   to = "/.netlify/functions/:splat"
   status = 200
+  force = true
 
-# Then add the catch-all redirect for the SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
