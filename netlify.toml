@@ -21,6 +21,7 @@
     "functions/src/**/*.js",
     "functions/src/**/*.ts"
   ]
+  external_node_modules = ["node-fetch"]
 
 [functions.excluded_files]
   patterns = [
@@ -35,9 +36,6 @@
     "**/.eslintrc*",
     "**/tsconfig*.json"
   ]
-
-[functions.external_node_modules]
-  - "node-fetch"
 
 [[redirects]]
   from = "/.netlify/functions/*"
