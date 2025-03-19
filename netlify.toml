@@ -20,6 +20,13 @@
   excluded_files = ["**/node_modules/**/.eslintrc*"]
   external_node_modules = ["node-fetch"]
 
+# First, add a redirect for functions with a higher priority
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Then add the catch-all redirect for the SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"

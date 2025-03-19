@@ -1,9 +1,21 @@
 import { ChatMessage } from "./types";
 
+// Type declaration for Vite's import.meta.env
+interface ImportMetaEnv {
+  DEV: boolean;
+  PROD: boolean;
+  MODE: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 // API configuration
-// We're using a test function first to diagnose issues
-const TEST_URL = "/.netlify/functions/test";
-const API_URL = "/.netlify/functions/gemma-proxy";
+const isDevelopment = import.meta.env.DEV;
+const API_BASE_URL = isDevelopment ? 'http://localhost:9999' : '/.netlify/functions';
+const TEST_URL = `${API_BASE_URL}/test`;
+const API_URL = `${API_BASE_URL}/gemma-proxy`;
 const API_KEY = (window as any).ENV?.NEXT_PUBLIC_HUGGINGFACE_API_KEY || '';
 
 // Log API key status for debugging (without revealing the actual key)
@@ -176,6 +188,7 @@ function formatMessagesForGemma(messages: ChatMessage[], systemPrompt: string): 
   };
 }
 
+// Function to generate Gemma response
 export async function generateGemmaResponse(
   messages: ChatMessage[],
   currentMessage: string
@@ -221,7 +234,7 @@ export async function generateGemmaResponse(
       if (!testResponse.ok) {
         // If the test fails, log the error and fall back to local responses
         const errorText = await testResponse.text();
-        console.error("Test function error:", testResponse.status, errorText.substring(0, 100));
+        console.error("Test function error:", testResponse.status, errorText);
         throw new Error(`Test function returned ${testResponse.status}`);
       } else {
         console.log("Test function successful, proceeding with Gemma API call");
@@ -238,118 +251,68 @@ export async function generateGemmaResponse(
       console.log("API key status:", API_KEY ? "Set" : "Not set");
       
       const controller = new AbortController();
-      // Reduce timeout from 15s to 10s for faster fallback
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
-      try {
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        });
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      
+      // Handle API errors
+      if (!response.ok) {
+        console.error(`API Error: ${response.status} - ${response.statusText}`);
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
         
-        clearTimeout(timeoutId);
-        
-        // Handle API errors
-        if (!response.ok) {
-          console.error(`API Error: ${response.status} - ${response.statusText}`);
-          
-          // Try to read the error response
-          try {
-            const errorText = await response.text();
-            console.error("Error response:", errorText.substring(0, 200));
-          } catch (e) {
-            console.error("Could not read error response");
-          }
-          
-          if (response.status === 503 || response.status === 504) {
-            console.warn("API service unavailable - falling back to local generation");
-          } else if (response.status === 403 || response.status === 401) {
-            console.warn("API authentication error - check your API key");
-          } else if (response.status === 404) {
-            console.warn("API endpoint not found - check function deployment");
-          }
-          
-          // Fall back to local responses in any error case
-          const category = getCategory(currentMessage);
-          return getRandomResponse(category);
-        }
-        
-        // Get the response - first try as text to debug any issues
-        let responseText;
-        try {
-          responseText = await response.text();
-          console.log("Raw API Response:", responseText.substring(0, 200));
-          
-          // Now parse it as JSON
-          const data = JSON.parse(responseText);
-          console.log("Parsed API Response:", data);
-          
-          // Use fallback responses if no good response from API
-          if (!data || (Array.isArray(data) && data.length === 0)) {
-            console.warn("Empty API response, falling back to local response");
-            const category = getCategory(currentMessage);
-            return getRandomResponse(category);
-          }
-          
-          let responseString = "";
-          
-          // Extract the response text from various possible formats
-          if (typeof data === 'string') {
-            responseString = data;
-          } else if (data && typeof data.generated_text === 'string') {
-            responseString = data.generated_text;
-          } else if (Array.isArray(data) && data.length > 0) {
-            const firstItem = data[0];
-            if (typeof firstItem === 'string') {
-              responseString = firstItem;
-            } else if (firstItem && typeof firstItem.generated_text === 'string') {
-              responseString = firstItem.generated_text;
-            }
-          }
-          
-          // If we couldn't extract a response, use fallback
-          if (!responseString) {
-            console.warn("Could not extract response text, falling back to local response");
-            const category = getCategory(currentMessage);
-            return getRandomResponse(category);
-          }
-          
-          // Clean up the response before returning it
-          return cleanResponse(responseString);
-          
-        } catch (parseError) {
-          console.error("Error parsing API response:", parseError);
-          console.error("Raw response was:", responseText);
-          // Fall back to local response
-          const category = getCategory(currentMessage);
-          return getRandomResponse(category);
-        }
-      } catch (fetchError: any) {
-        clearTimeout(timeoutId);
-        
-        if (fetchError.name === 'AbortError') {
-          console.error("Request timed out - network may be slow");
-        } else {
-          console.error("Network error:", fetchError);
-        }
-        
-        // Fall back to local responses for any fetch errors
         const category = getCategory(currentMessage);
         return getRandomResponse(category);
       }
+      
+      const data = await response.json();
+      
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        console.warn("Empty API response, falling back to local response");
+        const category = getCategory(currentMessage);
+        return getRandomResponse(category);
+      }
+      
+      let responseString = "";
+      
+      if (typeof data === 'string') {
+        responseString = data;
+      } else if (data && typeof data.generated_text === 'string') {
+        responseString = data.generated_text;
+      } else if (Array.isArray(data) && data.length > 0) {
+        const firstItem = data[0];
+        if (typeof firstItem === 'string') {
+          responseString = firstItem;
+        } else if (firstItem && typeof firstItem.generated_text === 'string') {
+          responseString = firstItem.generated_text;
+        }
+      }
+      
+      if (!responseString) {
+        console.warn("Could not extract response text, falling back to local response");
+        const category = getCategory(currentMessage);
+        return getRandomResponse(category);
+      }
+      
+      return cleanResponse(responseString);
+      
     } catch (error) {
-      console.error("Error in generateGemmaResponse:", error);
+      console.error("Error in API call:", error);
       const category = getCategory(currentMessage);
       return getRandomResponse(category);
     }
-  } catch (outerError) {
-    console.error("Error in generateGemmaResponse:", outerError);
-    
-    // Fall back to local responses in case of any error
+  } catch (error) {
+    console.error("Error in generateGemmaResponse:", error);
     const category = getCategory(currentMessage);
     return getRandomResponse(category);
   }

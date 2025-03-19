@@ -56,6 +56,14 @@ export default defineConfig({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      '/.netlify/functions': {
+        target: 'http://localhost:9999',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path.replace(/^\/.netlify\/functions/, '')
+      }
+    }
   },
   optimizeDeps: {
     include: [
