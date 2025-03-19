@@ -21,6 +21,16 @@ if (fs.existsSync(distPublicDir)) {
   const redirectsPath = path.resolve(distPublicDir, '_redirects');
   fs.writeFileSync(redirectsPath, redirectsContent);
   console.log(`Generated _redirects file at ${redirectsPath}`);
+  
+  // Copy env-config.js to dist/public if it exists
+  const sourceEnvConfig = path.resolve(__dirname, '../client/public/env-config.js');
+  if (fs.existsSync(sourceEnvConfig)) {
+    const destEnvConfig = path.resolve(distPublicDir, 'env-config.js');
+    fs.copyFileSync(sourceEnvConfig, destEnvConfig);
+    console.log(`Copied env-config.js to ${destEnvConfig}`);
+  } else {
+    console.warn('Warning: env-config.js not found in client/public');
+  }
 } else {
   console.error(`Error: ${distPublicDir} does not exist. Build the project first.`);
   process.exit(1);
