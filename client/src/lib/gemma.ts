@@ -13,9 +13,8 @@ interface ImportMeta {
 
 // API configuration
 const isDevelopment = import.meta.env.DEV;
-const API_BASE_URL = isDevelopment ? 'http://localhost:9999' : '/.netlify/functions';
-const TEST_URL = `${API_BASE_URL}/test`;
-const API_URL = `${API_BASE_URL}/gemma-proxy`;
+// Direct API URL instead of using serverless functions
+const API_URL = "https://api-inference.huggingface.co/models/google/gemma-2b-it";
 const API_KEY = (window as any).ENV?.NEXT_PUBLIC_HUGGINGFACE_API_KEY || '';
 
 // Log API key status for debugging (without revealing the actual key)
@@ -221,33 +220,9 @@ export async function generateGemmaResponse(
       return getRandomResponse(category);
     }
 
-    // Test the serverless function infrastructure with a simple call first
+    // Call the HuggingFace API directly
     try {
-      console.log("Testing serverless functions with:", TEST_URL);
-      const testResponse = await fetch(TEST_URL, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      });
-      
-      if (!testResponse.ok) {
-        // If the test fails, log the error and fall back to local responses
-        const errorText = await testResponse.text();
-        console.error("Test function error:", testResponse.status, errorText);
-        throw new Error(`Test function returned ${testResponse.status}`);
-      } else {
-        console.log("Test function successful, proceeding with Gemma API call");
-      }
-    } catch (testError) {
-      console.error("Error testing serverless function:", testError);
-      const category = getCategory(currentMessage);
-      return getRandomResponse(category);
-    }
-
-    // Call the Netlify serverless function with improved error handling
-    try {
-      console.log("Sending request to:", API_URL);
+      console.log("Sending request to HuggingFace API:", API_URL);
       console.log("API key status:", API_KEY ? "Set" : "Not set");
       
       const controller = new AbortController();
@@ -256,6 +231,7 @@ export async function generateGemmaResponse(
       const response = await fetch(API_URL, {
         method: "POST",
         headers: {
+          "Authorization": `Bearer ${API_KEY}`,
           "Content-Type": "application/json",
           "Accept": "application/json"
         },
